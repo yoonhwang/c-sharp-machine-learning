@@ -1,3 +1,3 @@
-# c-sharp-machine-learning
+# Real World Machine Learning Projects in C#
 
-Real World Machine Learning Projects in C#
+Chapter 1. Basics of Machine Learning
