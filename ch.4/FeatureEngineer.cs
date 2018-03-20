@@ -16,7 +16,7 @@ namespace DataAnalyzer
 
             // Read in the OHLC dataset
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"\\Mac\Home\Documents\c-sharp-machine-learning\ch.4\input-data";
+            string dataDirPath = @"<path-to-data-dir>";
 
             // Load the OHLC data into a data frame
             string ohlcDataPath = Path.Combine(dataDirPath, "eurusd-daily-ohlc.csv");
