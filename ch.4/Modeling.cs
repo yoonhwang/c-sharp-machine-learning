@@ -24,7 +24,7 @@ namespace Modeling
 
             // Read in the file we created in the previous step
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"\\Mac\Home\Documents\c-sharp-machine-learning\ch.4\input-data";
+            string dataDirPath = @"<path-to-your-dir>";
 
             // Load the data into a data frame
             Console.WriteLine("Loading data...");
