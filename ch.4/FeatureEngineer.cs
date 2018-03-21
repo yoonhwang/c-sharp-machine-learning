@@ -16,7 +16,7 @@ namespace DataAnalyzer
 
             // Read in the OHLC dataset
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"<path-to-data-dir>";
+            string dataDirPath = @"<path-to-your-dir>";
 
             // Load the OHLC data into a data frame
             string ohlcDataPath = Path.Combine(dataDirPath, "eurusd-daily-ohlc.csv");
@@ -121,6 +121,11 @@ namespace DataAnalyzer
             ohlcDF.AddColumn("Close_minus_BollingerUpperBound_T-5", ohlcDF["Close_minus_BollingerUpperBound"].Shift(5));
 
             Console.WriteLine("Saving features DF into a CSV file...");
+
+            Console.WriteLine("\n\nDF Shape BEFORE Dropping Missing Values: ({0}, {1})", ohlcDF.RowCount, ohlcDF.ColumnCount);
+            ohlcDF = ohlcDF.DropSparseRows();
+            Console.WriteLine("\nDF Shape AFTER Dropping Missing Values: ({0}, {1})\n\n", ohlcDF.RowCount, ohlcDF.ColumnCount);
+
             ohlcDF.SaveCsv(Path.Combine(dataDirPath, "eurusd-features.csv"));
             Console.WriteLine("\nDONE!!!");
             Console.ReadKey();
