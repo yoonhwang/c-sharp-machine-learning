@@ -17,10 +17,10 @@ namespace FeatureEngineering
 
             // Read in the Online Retail dataset
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"\\Mac\Home\Documents\research\c-sharp-machine-learning\ch.6\input-data";
+            string dataDirPath = @"\\Mac\Home\Documents\c-sharp-machine-learning\ch.6\input-data";
 
             // Load the data into a data frame
-            string dataPath = Path.Combine(dataDirPath, "data-dropped-missing.csv");
+            string dataPath = Path.Combine(dataDirPath, "data-clean.csv");
             Console.WriteLine("Loading {0}\n\n", dataPath);
             var ecommerceDF = Frame.ReadCsv(
                 dataPath,
@@ -45,13 +45,13 @@ namespace FeatureEngineering
             var numCancelledPerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
                 new string[] { "CustomerID" },
                 new string[] { "Quantity" },
-                x => x.Select(y => y.Value >= 0? 0.0 : 1.0).Sum()
+                x => x.Select(y => y.Value >= 0 ? 0.0 : 1.0).Sum()
             );
             // 4. Average UnitPrice per Customer
             var avgUnitPricePerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
                 new string[] { "CustomerID" },
                 new string[] { "UnitPrice" },
-                x => x.Sum()/x.ValueCount
+                x => x.Sum() / x.ValueCount
             );
             // 5. Average Quantity per Customer
             var avgQuantityPerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
@@ -72,69 +72,63 @@ namespace FeatureEngineering
             Console.WriteLine("\n\n* Feature Set:");
             featuresDF.Print();
 
+            // NetRevenue feature distribution
+            PrintQuartiles(featuresDF, "NetRevenue");
+            // NumTransactions feature distribution
+            PrintQuartiles(featuresDF, "NumTransactions");
+            // AvgUnitPrice feature distribution
+            PrintQuartiles(featuresDF, "AvgUnitPrice");
+            // AvgQuantity feature distribution
+            PrintQuartiles(featuresDF, "AvgQuantity");
+            // PercentageCancelled feature distribution
+            PrintQuartiles(featuresDF, "PercentageCancelled");
+            Console.WriteLine("\n\n* Feature DF Shape: ({0}, {1})", featuresDF.RowCount, featuresDF.ColumnCount);
+
+            // 1. Drop Customers with Negative NetRevenue
+            featuresDF = featuresDF.Rows[
+                featuresDF["NetRevenue"].Where(x => x.Value >= 0.0).Keys
+            ];
+            // 2. Drop Customers with Negative AvgQuantity
+            featuresDF = featuresDF.Rows[
+                featuresDF["AvgQuantity"].Where(x => x.Value >= 0.0).Keys
+            ];
+            // 3. Drop Customers who have more cancel orders than purchase orders
+            featuresDF = featuresDF.Rows[
+                featuresDF["PercentageCancelled"].Where(x => x.Value < 0.5).Keys
+            ];
+
+            Console.WriteLine("\n\n\n\n* After dropping customers with potential orphan cancel orders:");
+            // NetRevenue feature distribution
+            PrintQuartiles(featuresDF, "NetRevenue");
+            // NumTransactions feature distribution
+            PrintQuartiles(featuresDF, "NumTransactions");
+            // AvgUnitPrice feature distribution
+            PrintQuartiles(featuresDF, "AvgUnitPrice");
+            // AvgQuantity feature distribution
+            PrintQuartiles(featuresDF, "AvgQuantity");
+            // PercentageCancelled feature distribution
+            PrintQuartiles(featuresDF, "PercentageCancelled");
+            Console.WriteLine("\n\n* Feature DF Shape: ({0}, {1})", featuresDF.RowCount, featuresDF.ColumnCount);
+
             string outputPath = Path.Combine(dataDirPath, "features.csv");
             Console.WriteLine("* Exporting features data: {0}", outputPath);
             featuresDF.SaveCsv(outputPath);
 
-            HistogramBox.CheckForIllegalCrossThreadCalls = false;
-
-            // NetRevenue feature distribution
-            Console.WriteLine("\n\n-- NetRevenue Distribution-- ");
-            double[] quantiles = Accord.Statistics.Measures.Quantiles(
-                featuresDF["NetRevenue"].ValuesAll.ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-            // NumTransactions feature distribution
-            Console.WriteLine("\n\n-- NumTransactions Distribution-- ");
-            quantiles = Accord.Statistics.Measures.Quantiles(
-                featuresDF["NumTransactions"].ValuesAll.ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-            // AvgUnitPrice feature distribution
-            Console.WriteLine("\n\n-- AvgUnitPrice Distribution-- ");
-            quantiles = Accord.Statistics.Measures.Quantiles(
-                featuresDF["AvgUnitPrice"].ValuesAll.ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-            // AvgQuantity feature distribution
-            Console.WriteLine("\n\n-- AvgQuantity Distribution-- ");
-            quantiles = Accord.Statistics.Measures.Quantiles(
-                featuresDF["AvgQuantity"].ValuesAll.ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-            // PercentageCancelled feature distribution
-            Console.WriteLine("\n\n-- PercentageCancelled Distribution-- ");
-            quantiles = Accord.Statistics.Measures.Quantiles(
-                featuresDF["PercentageCancelled"].ValuesAll.ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-            
             Console.WriteLine("\n\n\n\nDONE!!");
             Console.ReadKey();
+        }
+
+        private static void PrintQuartiles(Frame<int, string> df, string colname)
+        {
+            Console.WriteLine("\n\n-- {0} Distribution-- ", colname);
+            double[] quantiles = Accord.Statistics.Measures.Quantiles(
+                df[colname].ValuesAll.ToArray(),
+                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
+            );
+            Console.WriteLine(
+                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
+                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
+            );
         }
     }
 }
