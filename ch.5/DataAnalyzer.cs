@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FeatureEngineering
+namespace DataAnalyzer
 {
     class Program
     {
@@ -15,110 +15,205 @@ namespace FeatureEngineering
         {
             Console.SetWindowSize(100, 50);
 
-            // Read in the Online Retail dataset
+            // Read in the House Price dataset
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"\\Mac\Home\Documents\research\c-sharp-machine-learning\ch.6\input-data";
+            string dataDirPath = @"\\Mac\Home\Documents\c-sharp-machine-learning\ch.5\input-data";
 
             // Load the data into a data frame
-            string dataPath = Path.Combine(dataDirPath, "data-dropped-missing.csv");
-            Console.WriteLine("Loading {0}\n\n", dataPath);
-            var ecommerceDF = Frame.ReadCsv(
+            string dataPath = Path.Combine(dataDirPath, "train.csv");
+            Console.WriteLine("Loading {0}\n", dataPath);
+            var houseDF = Frame.ReadCsv(
                 dataPath,
                 hasHeaders: true,
                 inferTypes: true
             );
-            Console.WriteLine("* Shape: {0}, {1}\n\n", ecommerceDF.RowCount, ecommerceDF.ColumnCount);
 
-            // 1. Net Revenue per Customer
-            var revPerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
-                new string[] { "CustomerID" },
-                new string[] { "Amount" },
-                x => x.Sum()
+            // Categorical Variable #1: Building Type
+            Console.WriteLine("\nCategorical Variable #1: Building Type");
+            var buildingTypeDistribution = houseDF.GetColumn<string>(
+                "BldgType"
+            ).GroupBy<string>(x => x.Value).Select(x => (double)x.Value.KeyCount);
+            buildingTypeDistribution.Print();
+
+            var buildingTypeBarChart = DataBarBox.Show(
+                buildingTypeDistribution.Keys.ToArray(),
+                buildingTypeDistribution.Values.ToArray()
             );
-            // 2. # of Total Transactions per Customer
-            var numTransactionsPerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
-                new string[] { "CustomerID" },
-                new string[] { "Quantity" },
-                x => x.ValueCount
-            );
-            // 3. # of Cancelled Transactions per Customer
-            var numCancelledPerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
-                new string[] { "CustomerID" },
-                new string[] { "Quantity" },
-                x => x.Select(y => y.Value >= 0? 0.0 : 1.0).Sum()
-            );
-            // 4. Average UnitPrice per Customer
-            var avgUnitPricePerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
-                new string[] { "CustomerID" },
-                new string[] { "UnitPrice" },
-                x => x.Sum()/x.ValueCount
-            );
-            // 5. Average Quantity per Customer
-            var avgQuantityPerCustomerDF = ecommerceDF.AggregateRowsBy<double, double>(
-                new string[] { "CustomerID" },
-                new string[] { "Quantity" },
-                x => x.Sum() / x.ValueCount
+            buildingTypeBarChart.SetTitle("Building Type Distribution (Categorical)");
+            System.Threading.Thread.Sleep(3000);
+            buildingTypeBarChart.Invoke(
+                new Action(() =>
+                {
+                    buildingTypeBarChart.Size = new System.Drawing.Size(1000, 700);
+                })
             );
 
-            // Aggregate all results
-            var featuresDF = Frame.CreateEmpty<int, string>();
-            featuresDF.AddColumn("NetRevenue", revPerCustomerDF.GetColumn<double>("Amount"));
-            featuresDF.AddColumn("NumTransactions", numTransactionsPerCustomerDF.GetColumn<double>("Quantity"));
-            featuresDF.AddColumn("NumCancelled", numCancelledPerCustomerDF.GetColumn<double>("Quantity"));
-            featuresDF.AddColumn("AvgUnitPrice", avgUnitPricePerCustomerDF.GetColumn<double>("UnitPrice"));
-            featuresDF.AddColumn("AvgQuantity", avgQuantityPerCustomerDF.GetColumn<double>("Quantity"));
-            featuresDF.AddColumn("PercentageCancelled", featuresDF["NumCancelled"] / featuresDF["NumTransactions"]);
+            // Categorical Variable #2: Lot Configuration
+            Console.WriteLine("\nCategorical Variable #1: Building Type");
+            var lotConfigDistribution = houseDF.GetColumn<string>(
+                "LotConfig"
+            ).GroupBy<string>(x => x.Value).Select(x => (double)x.Value.KeyCount);
+            lotConfigDistribution.Print();
 
-            Console.WriteLine("\n\n* Feature Set:");
-            featuresDF.Print();
+            var lotConfigBarChart = DataBarBox.Show(
+                lotConfigDistribution.Keys.ToArray(),
+                lotConfigDistribution.Values.ToArray()
+            );
+            lotConfigBarChart.SetTitle("Lot Configuration Distribution (Categorical)");
+            System.Threading.Thread.Sleep(3000);
+            lotConfigBarChart.Invoke(
+                new Action(() =>
+                {
+                    lotConfigBarChart.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
 
-            string outputPath = Path.Combine(dataDirPath, "features.csv");
-            Console.WriteLine("* Exporting features data: {0}", outputPath);
-            featuresDF.SaveCsv(outputPath);
+            // Ordinal Categorical Variable #1: Overall material and finish of the house
+            Console.WriteLine("\nOrdinal Categorical #1: Overall material and finish of the house");
+            var overallQualDistribution = houseDF.GetColumn<string>(
+                "OverallQual"
+            ).GroupBy<int>(
+                x => Convert.ToInt32(x.Value)
+            ).Select(
+                x => (double)x.Value.KeyCount
+            ).SortByKey().Reversed;
+            overallQualDistribution.Print();
+
+            var overallQualBarChart = DataBarBox.Show(
+                overallQualDistribution.Keys.Select(x => x.ToString()),
+                overallQualDistribution.Values.ToArray()
+            );
+            overallQualBarChart.SetTitle("Overall House Quality Distribution (Ordinal)");
+            System.Threading.Thread.Sleep(3000);
+            overallQualBarChart.Invoke(
+                new Action(() =>
+                {
+                    overallQualBarChart.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
+
+            // Ordinal Categorical Variable #2: Exterior Quality
+            Console.WriteLine("\nOrdinal Categorical #2: Exterior Quality");
+            var exteriorQualDistribution = houseDF.GetColumn<string>(
+                "ExterQual"
+            ).GroupBy<string>(x => x.Value).Select(
+                x => (double)x.Value.KeyCount
+            )[new string[] { "Ex", "Gd", "TA", "Fa" }];
+            exteriorQualDistribution.Print();
+
+            var exteriorQualBarChart = DataBarBox.Show(
+                exteriorQualDistribution.Keys.Select(x => x.ToString()),
+                exteriorQualDistribution.Values.ToArray()
+            );
+            exteriorQualBarChart.SetTitle("Exterior Quality Distribution (Ordinal)");
+            System.Threading.Thread.Sleep(3000);
+            exteriorQualBarChart.Invoke(
+                new Action(() =>
+                {
+                    exteriorQualBarChart.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
 
             HistogramBox.CheckForIllegalCrossThreadCalls = false;
+
+            // Continuous Variable #1-1: First Floor Square Feet
+            var firstFloorHistogram = HistogramBox
+            .Show(
+                houseDF.DropSparseRows()["1stFlrSF"].ValuesAll.ToArray(),
+                title: "First Floor Square Feet (Continuous)"
+            )
+            .SetNumberOfBins(20);
+
+            System.Threading.Thread.Sleep(3000);
+            firstFloorHistogram.Invoke(
+                new Action(() =>
+                {
+                    firstFloorHistogram.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
             
-            // NetRevenue feature distribution
-            HistogramBox
+            // Continuous Variable #1-2: Log of First Floor Square Feet
+            var logFirstFloorHistogram = HistogramBox
             .Show(
-                featuresDF["NetRevenue"].Where(x => x.Value > 0).Log().ValuesAll.ToArray()
+                houseDF.DropSparseRows()["1stFlrSF"].Log().ValuesAll.ToArray(),
+                title: "First Floor Square Feet - Log Transformed (Continuous)"
             )
-            .SetNumberOfBins(50)
-            .Hold();
+            .SetNumberOfBins(20);
 
-            // NumTransactions feature distribution
-            HistogramBox
+            System.Threading.Thread.Sleep(3000);
+            logFirstFloorHistogram.Invoke(
+                new Action(() =>
+                {
+                    logFirstFloorHistogram.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
+
+            // Continuous Variable #2-1: Size of garage in square feet
+            var garageHistogram = HistogramBox
             .Show(
-                featuresDF["NumTransactions"].ValuesAll.ToArray()
+                houseDF.DropSparseRows()["GarageArea"].ValuesAll.ToArray(),
+                title: "Size of garage in square feet (Continuous)"
             )
-            .SetNumberOfBins(50)
-            .Hold();
+            .SetNumberOfBins(20);
 
-            // AvgUnitPrice feature distribution
-            HistogramBox
+            System.Threading.Thread.Sleep(3000);
+            garageHistogram.Invoke(
+                new Action(() =>
+                {
+                    garageHistogram.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
+
+            // Continuous Variable #2-2: Log of Value of miscellaneous feature
+            var logGarageHistogram = HistogramBox
             .Show(
-                featuresDF["AvgUnitPrice"].ValuesAll.ToArray()
+                houseDF.DropSparseRows()["GarageArea"].Log().ValuesAll.ToArray(),
+                title: "Size of garage in square feet - Log Transformed (Continuous)"
             )
-            .SetNumberOfBins(50)
-            .Hold();
+            .SetNumberOfBins(20);
 
-            // AvgQuantity feature distribution
-            HistogramBox
+            System.Threading.Thread.Sleep(3000);
+            logGarageHistogram.Invoke(
+                new Action(() =>
+                {
+                    logGarageHistogram.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
+
+            // Target Variable: Sale Price
+            var salePriceHistogram = HistogramBox
             .Show(
-                featuresDF["AvgQuantity"].ValuesAll.ToArray()
+                houseDF.DropSparseRows()["SalePrice"].ValuesAll.ToArray(),
+                title: "Sale Price (Continuous)"
             )
-            .SetNumberOfBins(50)
-            .Hold();
+            .SetNumberOfBins(20);
 
-            // PercentageCancelled feature distribution
-            HistogramBox
+            System.Threading.Thread.Sleep(3000);
+            salePriceHistogram.Invoke(
+                new Action(() =>
+                {
+                    salePriceHistogram.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
+
+            // Target Variable: Sale Price - Log Transformed
+            var logSalePriceHistogram = HistogramBox
             .Show(
-                featuresDF["PercentageCancelled"].ValuesAll.ToArray()
+                houseDF.DropSparseRows()["SalePrice"].Log().ValuesAll.ToArray(),
+                title: "Sale Price - Log Transformed (Continuous)"
             )
-            .SetNumberOfBins(50)
-            .Hold();
+            .SetNumberOfBins(20);
 
-            Console.WriteLine("\n\n\n\nDONE!!");
+            System.Threading.Thread.Sleep(3000);
+            logSalePriceHistogram.Invoke(
+                new Action(() =>
+                {
+                    logSalePriceHistogram.Size = new System.Drawing.Size(1000, 700);
+                })
+            );
+
+
+            Console.WriteLine("\nDONE!!!");
             Console.ReadKey();
         }
     }
