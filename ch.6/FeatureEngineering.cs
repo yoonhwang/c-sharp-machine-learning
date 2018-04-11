@@ -1,3 +1,4 @@
+using Accord.Controls;
 using Deedle;
 using System;
 using System.Collections.Generic;
@@ -75,6 +76,63 @@ namespace FeatureEngineering
             Console.WriteLine("* Exporting features data: {0}", outputPath);
             featuresDF.SaveCsv(outputPath);
 
+            HistogramBox.CheckForIllegalCrossThreadCalls = false;
+
+            // NetRevenue feature distribution
+            Console.WriteLine("\n\n-- NetRevenue Distribution-- ");
+            double[] quantiles = Accord.Statistics.Measures.Quantiles(
+                featuresDF["NetRevenue"].ValuesAll.ToArray(),
+                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
+            );
+            Console.WriteLine(
+                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
+                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
+            );
+
+            // NumTransactions feature distribution
+            Console.WriteLine("\n\n-- NumTransactions Distribution-- ");
+            quantiles = Accord.Statistics.Measures.Quantiles(
+                featuresDF["NumTransactions"].ValuesAll.ToArray(),
+                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
+            );
+            Console.WriteLine(
+                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
+                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
+            );
+
+            // AvgUnitPrice feature distribution
+            Console.WriteLine("\n\n-- AvgUnitPrice Distribution-- ");
+            quantiles = Accord.Statistics.Measures.Quantiles(
+                featuresDF["AvgUnitPrice"].ValuesAll.ToArray(),
+                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
+            );
+            Console.WriteLine(
+                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
+                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
+            );
+
+            // AvgQuantity feature distribution
+            Console.WriteLine("\n\n-- AvgQuantity Distribution-- ");
+            quantiles = Accord.Statistics.Measures.Quantiles(
+                featuresDF["AvgQuantity"].ValuesAll.ToArray(),
+                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
+            );
+            Console.WriteLine(
+                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
+                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
+            );
+
+            // PercentageCancelled feature distribution
+            Console.WriteLine("\n\n-- PercentageCancelled Distribution-- ");
+            quantiles = Accord.Statistics.Measures.Quantiles(
+                featuresDF["PercentageCancelled"].ValuesAll.ToArray(),
+                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
+            );
+            Console.WriteLine(
+                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
+                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
+            );
+            
             Console.WriteLine("\n\n\n\nDONE!!");
             Console.ReadKey();
         }
