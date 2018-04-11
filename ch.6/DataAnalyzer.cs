@@ -17,7 +17,7 @@ namespace DataAnalyzer
 
             // Read in the Online Retail dataset
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"\\Mac\Home\Documents\research\c-sharp-machine-learning\ch.6\input-data";
+            string dataDirPath = @"\\Mac\Home\Documents\c-sharp-machine-learning\ch.6\input-data";
 
             // Load the data into a data frame
             string dataPath = Path.Combine(dataDirPath, "data.csv");
@@ -32,7 +32,7 @@ namespace DataAnalyzer
 
             // 1. Missing CustomerID Values
             ecommerceDF
-                .Columns[new string[] { "CustomerID", "InvoiceNo", "StockCode", "Quantity", "UnitPrice", "Country"}]
+                .Columns[new string[] { "CustomerID", "InvoiceNo", "StockCode", "Quantity", "UnitPrice", "Country" }]
                 .GetRowsAt(new int[] { 1440, 1441, 1442, 1443, 1444, 1445, 1446 })
                 .Print();
             Console.WriteLine("\n\n* # of values in CustomerID column: {0}", ecommerceDF["CustomerID"].ValueCount);
@@ -47,13 +47,13 @@ namespace DataAnalyzer
             Console.WriteLine("* After dropping missing values and unnecessary columns:");
             ecommerceDF.GetRowsAt(new int[] { 0, 1, 2, 3, 4 }).Print();
             // Export Data
-            ecommerceDF.SaveCsv(Path.Combine(dataDirPath, "data-dropped-missing.csv"));
+            ecommerceDF.SaveCsv(Path.Combine(dataDirPath, "data-clean.csv"));
 
             // 2. Number of transactions by country
             var numTransactionsByCountry = ecommerceDF
                 .AggregateRowsBy<string, int>(
-                    new string[] { "Country" }, 
-                    new string[] { "CustomerID" }, 
+                    new string[] { "Country" },
+                    new string[] { "CustomerID" },
                     x => x.ValueCount
                 ).SortRows("CustomerID");
 
@@ -65,7 +65,7 @@ namespace DataAnalyzer
             top5.Print();
 
             var topTransactionByCountryBarChart = DataBarBox.Show(
-                top5.GetColumn<string>("Country").Values.ToArray().Select(x => x.Equals("United Kingdom")? "UK" : x),
+                top5.GetColumn<string>("Country").Values.ToArray().Select(x => x.Equals("United Kingdom") ? "UK" : x),
                 top5["CustomerID"].Values.ToArray()
             );
             topTransactionByCountryBarChart.SetTitle(
@@ -156,7 +156,7 @@ namespace DataAnalyzer
             purchaseVSCancelBarChart.SetTitle(
                 "Purchase vs. Cancel"
              );
-            
+
 
             Console.WriteLine("\n\n\n\n\nDONE!!!");
             Console.ReadKey();
