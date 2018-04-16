@@ -1,4 +1,5 @@
 using Accord.Controls;
+using CenterSpace.NMath.Stats;
 using Deedle;
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,8 @@ namespace FeatureEngineering
 
             // Aggregate all results
             var featuresDF = Frame.CreateEmpty<int, string>();
+            featuresDF.AddColumn("CustomerID", revPerCustomerDF.GetColumn<double>("CustomerID"));
+            featuresDF.AddColumn("Description", ecommerceDF.GetColumn<string>("Description"));
             featuresDF.AddColumn("NetRevenue", revPerCustomerDF.GetColumn<double>("Amount"));
             featuresDF.AddColumn("NumTransactions", numTransactionsPerCustomerDF.GetColumn<double>("Quantity"));
             featuresDF.AddColumn("NumCancelled", numCancelledPerCustomerDF.GetColumn<double>("Quantity"));
@@ -109,6 +112,106 @@ namespace FeatureEngineering
             // PercentageCancelled feature distribution
             PrintQuartiles(featuresDF, "PercentageCancelled");
             Console.WriteLine("\n\n* Feature DF Shape: ({0}, {1})", featuresDF.RowCount, featuresDF.ColumnCount);
+
+            HistogramBox.CheckForIllegalCrossThreadCalls = false;
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["NetRevenue"].ValuesAll.ToArray(),
+                title: "NetRevenue Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["NumTransactions"].ValuesAll.ToArray(),
+                title: "NumTransactions Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["AvgUnitPrice"].ValuesAll.ToArray(),
+                title: "AvgUnitPrice Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["AvgQuantity"].ValuesAll.ToArray(),
+                title: "AvgQuantity Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["PercentageCancelled"].ValuesAll.ToArray(),
+                title: "PercentageCancelled Distribution"
+            )
+            .SetNumberOfBins(50);
+
+
+            // Create Percentile Features
+            featuresDF.AddColumn(
+                "NetRevenuePercentile",
+                featuresDF["NetRevenue"].Select(
+                    x => StatsFunctions.PercentileRank(featuresDF["NetRevenue"].Values.ToArray(), x.Value)
+                )
+            );
+            featuresDF.AddColumn(
+                "NumTransactionsPercentile",
+                featuresDF["NumTransactions"].Select(
+                    x => StatsFunctions.PercentileRank(featuresDF["NumTransactions"].Values.ToArray(), x.Value)
+                )
+            );
+            featuresDF.AddColumn(
+                "AvgUnitPricePercentile",
+                featuresDF["AvgUnitPrice"].Select(
+                    x => StatsFunctions.PercentileRank(featuresDF["AvgUnitPrice"].Values.ToArray(), x.Value)
+                )
+            );
+            featuresDF.AddColumn(
+                "AvgQuantityPercentile",
+                featuresDF["AvgQuantity"].Select(
+                    x => StatsFunctions.PercentileRank(featuresDF["AvgQuantity"].Values.ToArray(), x.Value)
+                )
+            );
+            featuresDF.AddColumn(
+                "PercentageCancelledPercentile",
+                featuresDF["PercentageCancelled"].Select(
+                    x => StatsFunctions.PercentileRank(featuresDF["PercentageCancelled"].Values.ToArray(), x.Value)
+                )
+            );
+            Console.WriteLine("\n\n\n* Percentile Features:");
+            featuresDF.Columns[
+                new string[] { "NetRevenue", "NetRevenuePercentile", "NumTransactions", "NumTransactionsPercentile" }
+            ].Print();
+
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["NetRevenuePercentile"].ValuesAll.ToArray(),
+                title: "NetRevenuePercentile Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["NumTransactionsPercentile"].ValuesAll.ToArray(),
+                title: "NumTransactionsPercentile Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["AvgUnitPricePercentile"].ValuesAll.ToArray(),
+                title: "AvgUnitPricePercentile Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["AvgQuantityPercentile"].ValuesAll.ToArray(),
+                title: "AvgQuantityPercentile Distribution"
+            )
+            .SetNumberOfBins(50);
+            HistogramBox
+            .Show(
+                featuresDF.DropSparseRows()["PercentageCancelledPercentile"].ValuesAll.ToArray(),
+                title: "PercentageCancelledPercentile Distribution"
+            )
+            .SetNumberOfBins(50);
 
             string outputPath = Path.Combine(dataDirPath, "features.csv");
             Console.WriteLine("* Exporting features data: {0}", outputPath);
