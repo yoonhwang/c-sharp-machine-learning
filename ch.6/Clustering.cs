@@ -164,13 +164,6 @@ namespace Clustering
             itemDistribution[itemDistribution.Keys.Take(10)].Print();
         }
 
-        private static int[] BuildClusters(double[][] sampleSet, int numCluster)
-        {
-            KMeans kmeans = new KMeans(numCluster);
-            KMeansClusterCollection clusters = kmeans.Learn(sampleSet);
-            return clusters.Decide(sampleSet);
-        }
-
         private static void PrintCentroidsInfo(double[][] centroids, string[] features)
         {
             Console.WriteLine("\t{0}", String.Join("\t", features));
