@@ -61,6 +61,7 @@ namespace Modeling
             ).ValuesAll.ToArray();
             int[] output = featuresDF.GetColumn<int>("target").Values.ToArray();
 
+            Accord.Math.Random.Generator.Seed = 0;
 
             // 1. Train a LogisticRegression Classifier
             Console.WriteLine("\n---- Training Logistic Regression Classifier ----");
