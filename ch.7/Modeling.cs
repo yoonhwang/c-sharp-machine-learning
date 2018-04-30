@@ -64,7 +64,7 @@ namespace Modeling
             Accord.Math.Random.Generator.Seed = 0;
 
             // 1. Train a LogisticRegression Classifier
-            Console.WriteLine("\n---- Training Logistic Regression Classifier ----");
+            Console.WriteLine("\n---- Logistic Regression Classifier ----\n");
             var logitSplitSet = new SplitSetValidation<MultinomialLogisticRegression, double[]>()
             {
                 Learner = (s) => new MultinomialLogisticLearning<GradientDescent>()
@@ -131,11 +131,12 @@ namespace Modeling
                 output.Where((x, i) => testSetIDX.Contains(i)).ToArray()
             );
 
-            Console.WriteLine(String.Format("\ntrain MRR score: {0:0.0000}", logitTrainMRRScore));
+            Console.WriteLine("\n---- Logistic Regression Classifier ----\n");
+            Console.WriteLine(String.Format("train MRR score: {0:0.0000}", logitTrainMRRScore));
             Console.WriteLine(String.Format("validation MRR score: {0:0.0000}", logitTestMRRScore));
 
             // 2. Train a Gaussian SVM Classifier
-            Console.WriteLine("\n---- Training SVM Classifier ----");
+            Console.WriteLine("\n---- Gaussian SVM Classifier ----\n");
             var teacher = new MulticlassSupportVectorLearning<Gaussian>()
             {
                 Learner = (param) => new SequentialMinimalOptimization<Gaussian>()
@@ -202,11 +203,12 @@ namespace Modeling
                 output.Where((x, i) => testSetIDX.Contains(i)).ToArray()
             );
 
-            Console.WriteLine(String.Format("\ntrain MRR score: {0:0.0000}", svmTrainMRRScore));
+            Console.WriteLine("\n---- Gaussian SVM Classifier ----\n");
+            Console.WriteLine(String.Format("train MRR score: {0:0.0000}", svmTrainMRRScore));
             Console.WriteLine(String.Format("validation MRR score: {0:0.0000}", svmTestMRRScore));
 
             // 3. Train a NaiveBayes Classifier
-            Console.WriteLine("\n---- Training NaiveBayes Classifier ----");
+            Console.WriteLine("\n---- NaiveBayes Classifier ----\n");
             var nbTeacher = new NaiveBayesLearning<NormalDistribution>();
 
             var nbTrainedModel = nbTeacher.Learn(
@@ -264,6 +266,7 @@ namespace Modeling
                 output.Where((x, i) => testSetIDX.Contains(i)).ToArray()
             );
 
+            Console.WriteLine("\n---- NaiveBayes Classifier ----\n");
             Console.WriteLine(String.Format("\ntrain MRR score: {0:0.0000}", nbTrainMRRScore));
             Console.WriteLine(String.Format("validation MRR score: {0:0.0000}", nbTestMRRScore));
 
@@ -322,6 +325,7 @@ namespace Modeling
                 metamodelTestPreds[i] = metamodel.Decide(combinedTestProbabilities[i]);
             }
 
+            Console.WriteLine("\n---- Meta-Model ----\n");
             Console.WriteLine(
                 String.Format(
                     "train accuracy: {0:0.0000}",
@@ -355,7 +359,8 @@ namespace Modeling
                 output.Where((x, i) => testSetIDX.Contains(i)).ToArray()
             );
 
-            Console.WriteLine(String.Format("\ntrain MRR score: {0:0.0000}", metaTrainMRRScore));
+            Console.WriteLine("\n---- Meta-Model ----\n");
+            Console.WriteLine(String.Format("train MRR score: {0:0.0000}", metaTrainMRRScore));
             Console.WriteLine(String.Format("validation MRR score: {0:0.0000}", metaTestMRRScore));
 
             Console.WriteLine("\n\n\n\n\nDONE!!!");
