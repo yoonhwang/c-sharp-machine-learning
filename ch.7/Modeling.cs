@@ -267,7 +267,7 @@ namespace Modeling
             );
 
             Console.WriteLine("\n---- NaiveBayes Classifier ----\n");
-            Console.WriteLine(String.Format("\ntrain MRR score: {0:0.0000}", nbTrainMRRScore));
+            Console.WriteLine(String.Format("train MRR score: {0:0.0000}", nbTrainMRRScore));
             Console.WriteLine(String.Format("validation MRR score: {0:0.0000}", nbTestMRRScore));
 
             // 4. Ensembling Base Models
