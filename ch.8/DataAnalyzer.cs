@@ -108,6 +108,18 @@ namespace DataAnalyzer
                 ).SetTitle(String.Format("Digit: {0} - 20 sample Pixels", label));
             }
 
+            double[][] twoPixels = featuresDF.Columns[
+                new string[] { featureColumns[15], featureColumns[16] }
+            ].Rows.Select(
+                x => Array.ConvertAll<object, double>(x.Value.ValuesAll.ToArray(), o => Convert.ToDouble(o))
+            ).ValuesAll.ToArray();
+
+            ScatterplotBox.Show(
+                String.Format("{0} vs. {1}", featureColumns[15], featureColumns[16]), 
+                twoPixels,
+                featuresDF.GetColumn<int>("label").Values.ToArray()
+            );
+
             Console.WriteLine("\n\n\n\n\nDONE!!!");
             Console.ReadKey();
         }
