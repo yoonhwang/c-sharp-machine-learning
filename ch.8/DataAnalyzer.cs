@@ -144,23 +144,23 @@ namespace DataAnalyzer
             int width = 28;
             int height = 28;
             int stride = width * 4;
-            int[,] integers = new int[width, height];
+            int[,] pixelData = new int[width, height];
 
-            for (int x = 0; x < width; ++x)
+            for (int i = 0; i < width; ++i)
             {
-                for (int y = 0; y < height; ++y)
+                for (int j = 0; j < height; ++j)
                 {
-                    byte[] bgra = new byte[] { (byte)rows[28 * x + y], (byte)rows[28 * x + y], (byte)rows[28 * x + y], 255 };
-                    integers[x, y] = BitConverter.ToInt32(bgra, 0);
+                    byte[] bgra = new byte[] { (byte)rows[28 * i + j], (byte)rows[28 * i + j], (byte)rows[28 * i + j], 255 };
+                    pixelData[i, j] = BitConverter.ToInt32(bgra, 0);
                 }
             }
 
             Bitmap bitmap;
             unsafe
             {
-                fixed (int* intPtr = &integers[0, 0])
+                fixed (int* ptr = &pixelData[0, 0])
                 {
-                    bitmap = new Bitmap(width, height, stride, PixelFormat.Format32bppRgb, new IntPtr(intPtr));
+                    bitmap = new Bitmap(width, height, stride, PixelFormat.Format32bppRgb, new IntPtr(ptr));
                 }
             }
             bitmap.Save(
