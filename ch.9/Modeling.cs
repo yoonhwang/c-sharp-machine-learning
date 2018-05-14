@@ -49,9 +49,9 @@ namespace Modeling
 
             // First 13 components explain about 50% of the variance
             // First 19 components explain about 60% of the variance
-            // First 26 components explain about 70% of the variance
-            // First 33 components explain about 80% of the variance
-            int numComponents = 26;
+            // First 27 components explain about 70% of the variance
+            // First 34 components explain about 80% of the variance
+            int numComponents = 27;
             string[] cols = featuresDF.ColumnKeys.Where((x, i) => i < numComponents).ToArray();
 
             // First, compute distances from the center/mean among normal events
