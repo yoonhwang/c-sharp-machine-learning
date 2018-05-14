@@ -37,7 +37,7 @@ namespace Modeling
             ).Select(x => int.Parse(x)).ToArray();
             featuresDF.AddColumn("attack_category", labels);
 
-            Console.WriteLine("* Shape: ({0}, {1})", featuresDF.RowCount, featuresDF.ColumnCount);
+            Console.WriteLine("* Shape: ({0}, {1})\n\n", featuresDF.RowCount, featuresDF.ColumnCount);
 
             var count = featuresDF.AggregateRowsBy<string, int>(
                 new string[] { "attack_category" },
@@ -78,7 +78,7 @@ namespace Modeling
             );
 
             Console.WriteLine(
-                "* Normal - mean: {0:0.0000}, std: {1:0.0000}",
+                "\n\n* Normal - mean: {0:0.0000}, std: {1:0.0000}",
                 meanDistance, stdDistance
             );
 
