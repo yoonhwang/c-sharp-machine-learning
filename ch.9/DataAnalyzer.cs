@@ -14,11 +14,11 @@ namespace DataAnalyzer
     {
         static void Main(string[] args)
         {
-            Console.SetWindowSize(100, 55);
+            Console.SetWindowSize(100, 60);
 
             // Read in the Cyber Attack dataset
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"\\Mac\Home\Documents\research\c-sharp-machine-learning\ch.9\input-data";
+            string dataDirPath = @"\\Mac\Home\Documents\c-sharp-machine-learning\ch.9\input-data";
 
             // Load the data into a data frame
             string dataPath = Path.Combine(dataDirPath, "kddcup.data_10_percent");
@@ -49,45 +49,70 @@ namespace DataAnalyzer
             Console.WriteLine("* Shape: {0}, {1}\n\n", featuresDF.RowCount, featuresDF.ColumnCount);
 
             // keeping "normal" for now for plotting purposes
-            string[] dosAttacks =
+            IDictionary<string, string> attackCategories = new Dictionary<string, string>
             {
-                "back.", "land.", "neptune.",
-                "pod.", "smurf.", "teardrop.",
-                "normal."
+                {"back", "dos"},
+                {"land", "dos"},
+                {"neptune", "dos"},
+                {"pod", "dos"},
+                {"smurf", "dos"},
+                {"teardrop", "dos"},
+                {"ipsweep", "probe"},
+                {"nmap", "probe"},
+                {"portsweep", "probe"},
+                {"satan", "probe"},
+                {"ftp_write", "r2l"},
+                {"guess_passwd", "r2l"},
+                {"imap", "r2l"},
+                {"multihop", "r2l"},
+                {"phf", "r2l"},
+                {"spy", "r2l"},
+                {"warezclient", "r2l"},
+                {"warezmaster", "r2l"},
+                {"buffer_overflow", "u2r"},
+                {"loadmodule", "u2r"},
+                {"perl", "u2r"},
+                {"rootkit", "u2r"},
+                {"normal", "normal"}
             };
-            var dosSubset = featuresDF.Rows[
-                featuresDF.GetColumn<string>("attack_type").Where(
-                    x => dosAttacks.Contains(x.Value)
-                ).Keys
-            ];
+
+            featuresDF.AddColumn(
+                "attack_category",
+                featuresDF.GetColumn<string>("attack_type")
+                    .Select(x => attackCategories[x.Value.Replace(".", "")])
+            );
+
+            // Export with Categories
+            Console.WriteLine("* Exporting data...");
+            featuresDF.SaveCsv(Path.Combine(dataDirPath, "data.csv"));
 
             // 1. Target Variable Distribution
-            Console.WriteLine("\n\n-- Counts by Attack Type --\n");
-            var attackCount = dosSubset.AggregateRowsBy<string, int>(
-                new string[] { "attack_type" },
+            Console.WriteLine("\n\n-- Counts by Attack Category --\n");
+            var attackCount = featuresDF.AggregateRowsBy<string, int>(
+                new string[] { "attack_category" },
                 new string[] { "duration" },
                 x => x.ValueCount
             ).SortRows("duration");
-            attackCount.RenameColumns(new string[] { "attack_type", "count" });
+            attackCount.RenameColumns(new string[] { "attack_category", "count" });
 
             attackCount.Print();
 
             DataBarBox.Show(
-                attackCount.GetColumn<string>("attack_type").Values.ToArray(),
+                attackCount.GetColumn<string>("attack_category").Values.ToArray(),
                 attackCount["count"].Values.ToArray()
             ).SetTitle(
-                "Counts by Attack Type"
+                "Counts by Attack Category"
             );
 
             // Now, remove normal records
-            dosSubset = dosSubset.Rows[
-                dosSubset.GetColumn<string>("attack_type").Where(
-                    x => !x.Value.Equals("normal.")
+            var attackSubset = featuresDF.Rows[
+                featuresDF.GetColumn<string>("attack_category").Where(
+                    x => !x.Value.Equals("normal")
                 ).Keys
             ];
             var normalSubset = featuresDF.Rows[
-                featuresDF.GetColumn<string>("attack_type").Where(
-                    x => x.Value.Equals("normal.")
+                featuresDF.GetColumn<string>("attack_category").Where(
+                    x => x.Value.Equals("normal")
                 ).Keys
             ];
 
@@ -99,44 +124,39 @@ namespace DataAnalyzer
             foreach (string variable in categoricalVars)
             {
                 Console.WriteLine("\n\n-- Counts by {0} --\n", variable);
-                Console.WriteLine("* DOS Attack:");
-                var countDF = dosSubset.AggregateRowsBy<string, int>(
+                Console.WriteLine("* Attack:");
+                var attackCountDF = attackSubset.AggregateRowsBy<string, int>(
                     new string[] { variable },
                     new string[] { "duration" },
                     x => x.ValueCount
-                ).SortRows("duration");
-                countDF.RenameColumns(new string[] { variable, "count" });
-
-                countDF.Print();
-
-                DataBarBox.Show(
-                    countDF.GetColumn<string>(variable).Values.ToArray(),
-                    countDF["count"].Values.ToArray()
-                ).SetTitle(
-                    String.Format("Counts by {0} (DOS Attack)", variable)
                 );
+                attackCountDF.RenameColumns(new string[] { variable, "count" });
+
+                attackCountDF.SortRows("count").Print();
 
                 Console.WriteLine("* Normal:");
-                countDF = normalSubset.AggregateRowsBy<string, int>(
+                var countDF = normalSubset.AggregateRowsBy<string, int>(
                     new string[] { variable },
                     new string[] { "duration" },
                     x => x.ValueCount
-                ).SortRows("duration");
+                );
                 countDF.RenameColumns(new string[] { variable, "count" });
 
-                countDF.Print();
+                countDF.SortRows("count").Print();
 
                 DataBarBox.Show(
                     countDF.GetColumn<string>(variable).Values.ToArray(),
-                    countDF["count"].Values.ToArray()
+                    new double[][] 
+                    {
+                        attackCountDF["count"].Values.ToArray(),
+                        countDF["count"].Values.ToArray()
+                    }
                 ).SetTitle(
-                    String.Format("Counts by {0} (Normal)", variable)
+                    String.Format("Counts by {0} (0 - Attack, 1 - Normal)", variable)
                 );
             }
 
             // 3. Continuous Variable Distribution
-            HistogramBox.CheckForIllegalCrossThreadCalls = false;
-
             string[] continuousVars =
             {
                 "duration", "src_bytes", "dst_bytes", "wrong_fragment", "urgent", "hot",
@@ -152,19 +172,19 @@ namespace DataAnalyzer
 
             foreach (string variable in continuousVars)
             {
-                Console.WriteLine(String.Format("\n\n-- {0} Distribution (DOS Attack) -- ", variable));
-                double[] dosQuartiles = Accord.Statistics.Measures.Quantiles(
-                    dosSubset[variable].ValuesAll.ToArray(),
+                Console.WriteLine(String.Format("\n\n-- {0} Distribution (Attack) -- ", variable));
+                double[] attachQuartiles = Accord.Statistics.Measures.Quantiles(
+                    attackSubset[variable].DropMissing().ValuesAll.ToArray(),
                     new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
                 );
                 Console.WriteLine(
                     "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                    dosQuartiles[0], dosQuartiles[1], dosQuartiles[2], dosQuartiles[3], dosQuartiles[4]
+                    attachQuartiles[0], attachQuartiles[1], attachQuartiles[2], attachQuartiles[3], attachQuartiles[4]
                 );
 
                 Console.WriteLine(String.Format("\n\n-- {0} Distribution (Normal) -- ", variable));
                 double[] normalQuantiles = Accord.Statistics.Measures.Quantiles(
-                    normalSubset[variable].ValuesAll.ToArray(),
+                    normalSubset[variable].DropMissing().ValuesAll.ToArray(),
                     new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
                 );
                 Console.WriteLine(
@@ -173,93 +193,9 @@ namespace DataAnalyzer
                 );
             }
 
-            string[] nonZeroVarianceCols = normalSubset.ColumnKeys
-                .Where(x =>
-                    !categoricalVars.Contains(x) &&
-                    !x.Equals("attack_type") &&
-                    normalSubset[x].Max() != normalSubset[x].Min())
-                .ToArray();
-            Console.WriteLine("\n* non-zero-variance cols: {0}", String.Join(", ", nonZeroVarianceCols));
-
-            double[][] normalData = BuildJaggedArray(
-                normalSubset.Columns[nonZeroVarianceCols].ToArray2D<double>(), normalSubset.RowCount, nonZeroVarianceCols.Length
-            );
-            double[][] dosData = BuildJaggedArray(
-                dosSubset.Columns[nonZeroVarianceCols].ToArray2D<double>(), dosSubset.RowCount, nonZeroVarianceCols.Length
-            );
-
-            var pca = new PrincipalComponentAnalysis(
-                PrincipalComponentMethod.Standardize
-            );
-            pca.NumberOfOutputs = 2;
-            pca.Learn(normalData);
-
-            double[][] normalFirst2Components = pca.Transform(normalData);
-            double[][] dosFirst2Components = pca.Transform(dosData);
-
-            double[][] first2Components = normalFirst2Components.Concat(dosFirst2Components).ToArray();
-            int[] labels = first2Components.Select((x, i) => i < normalFirst2Components.Length ? 0 : 1).ToArray();
-
-            ScatterplotBox.Show("Component #1 vs. Component #2", first2Components, labels);
-
-            Console.WriteLine(String.Format("\n\n-- Component #1 Distribution (DOS Attack) -- "));
-            double[] quantiles = Accord.Statistics.Measures.Quantiles(
-                dosFirst2Components.Select(x => x[0]).ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-            Console.WriteLine(String.Format("\n\n-- Component #1 Distribution (Normal) -- "));
-            quantiles = Accord.Statistics.Measures.Quantiles(
-                normalFirst2Components.Select(x => x[0]).ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-            Console.WriteLine(String.Format("\n\n-- Component #2 Distribution (DOS Attack) -- "));
-            quantiles = Accord.Statistics.Measures.Quantiles(
-                dosFirst2Components.Select(x => x[1]).ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-            Console.WriteLine(String.Format("\n\n-- Component #2 Distribution (Normal) -- "));
-            quantiles = Accord.Statistics.Measures.Quantiles(
-                normalFirst2Components.Select(x => x[1]).ToArray(),
-                new double[] { 0, 0.25, 0.5, 0.75, 1.0 }
-            );
-            Console.WriteLine(
-                "Min: \t\t\t{0:0.00}\nQ1 (25% Percentile): \t{1:0.00}\nQ2 (Median): \t\t{2:0.00}\nQ3 (75% Percentile): \t{3:0.00}\nMax: \t\t\t{4:0.00}",
-                quantiles[0], quantiles[1], quantiles[2], quantiles[3], quantiles[4]
-            );
-
-
 
             Console.WriteLine("\n\n\n\n\nDONE!!!");
             Console.ReadKey();
-        }
-
-        private static double[][] BuildJaggedArray(double[,] ary2d, int rowCount, int colCount)
-        {
-            double[][] matrix = new double[rowCount][];
-            for (int i = 0; i < rowCount; i++)
-            {
-                matrix[i] = new double[colCount];
-                for (int j = 0; j < colCount; j++)
-                {
-                    matrix[i][j] = double.IsNaN(ary2d[i, j]) ? 0.0 : ary2d[i, j];
-                }
-            }
-            return matrix;
         }
     }
 }
