@@ -179,9 +179,11 @@ namespace Modeling
             }
 
             double[] distances = data.Select(
-                (row, i) => row.Select(
-                    (x, j) => Math.Pow(x, 2) / componentVariances[j]
-                ).Sum()
+                (row, i) => Math.Sqrt(
+                    row.Select(
+                        (x, j) => Math.Pow(x, 2) / componentVariances[j]
+                    ).Sum()
+                )
             ).ToArray();
 
             return distances;
