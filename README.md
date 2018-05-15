@@ -1,5 +1,4 @@
 # Real World Machine Learning Projects in C#
- <br />
 
 Chapter 1. Basics of Machine Learning <br />
 Chapter 2. Spam Email Filtering <br />
