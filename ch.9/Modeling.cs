@@ -111,7 +111,7 @@ namespace Modeling
                     distances,
                     1 - targetFalseAlarmRate
                 );
-
+                Console.WriteLine(threshold);
                 int[] detected = attackDistances.Select(x => x > threshold ? 1 : 0).ToArray();
 
                 EvaluateResults(attackLabels, detected, targetFalseAlarmRate);
@@ -123,7 +123,6 @@ namespace Modeling
 
         private static void EvaluateResults(int[] attackLabels, int[] detected, double targetFalseAlarmRate)
         {
-            double overallAccuracy = 0.0;
             double overallRecall = (double)detected.Sum() / attackLabels.Length;
 
             double[] truePositives = new double[4];
@@ -135,12 +134,10 @@ namespace Modeling
 
                 if (detected[i] > 0)
                 {
-                    overallAccuracy += 1.0;
                     truePositives[attackLabels[i] - 1] += 1.0;
                 }
             }
 
-            overallAccuracy /= attackLabels.Length;
             double[] recalls = truePositives.Select((x, i) => x / actualClassCounts[i]).ToArray();
 
             Console.WriteLine("\n\n---- {0:0.0}% False Alarm Rate ----", targetFalseAlarmRate * 100.0);
