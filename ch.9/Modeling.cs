@@ -62,8 +62,8 @@ namespace Modeling
             double[][] normalData = BuildJaggedArray(
                 normalDF.ToArray2D<double>(), normalDF.RowCount, cols.Length
             );
-
-            double[] rawDistances = ComputeDistances(normalData);
+            double[] normalVariances = ComputeVariances(normalData);
+            double[] rawDistances = ComputeDistances(normalData, normalVariances);
 
             // Filter out extreme values
             int[] idxFiltered = Matrix.ArgSort(rawDistances)
@@ -98,7 +98,7 @@ namespace Modeling
             double[][] attackData = BuildJaggedArray(
                 attackDF.ToArray2D<double>(), attackDF.RowCount, cols.Length
             );
-            double[] attackDistances = ComputeDistances(attackData);
+            double[] attackDistances = ComputeDistances(attackData, normalVariances);
             int[] attackLabels = featuresDF.Rows[
                 featuresDF["attack_category"].Where(x => x.Value > 0).Keys
             ].GetColumn<int>("attack_category").ValuesAll.ToArray();
@@ -167,7 +167,7 @@ namespace Modeling
             return matrix;
         }
 
-        private static double[] ComputeDistances(double[][] data)
+        private static double[] ComputeVariances(double[][] data)
         {
             double[] componentVariances = new double[data[0].Length];
 
@@ -177,6 +177,12 @@ namespace Modeling
                     .Select((x, i) => Math.Pow(data[i][j], 2))
                     .Sum() / data.Length;
             }
+
+            return componentVariances;
+        }
+
+        private static double[] ComputeDistances(double[][] data, double[] componentVariances)
+        {
 
             double[] distances = data.Select(
                 (row, i) => Math.Sqrt(
