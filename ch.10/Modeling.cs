@@ -108,22 +108,29 @@ namespace Modeling
                 testIdx
             ].GetColumn<int>("is_fraud").ValuesAll.ToArray();
 
-            int[] detected = new int[fraudData.Length];
-            for(int i = 0; i < fraudData.Length; i++)
+            for(int j = 0; j <= 10; j++)
             {
-                bool isNormal = model.Decide(fraudData[i]);
-                detected[i] = isNormal ? 0 : 1;
-            }
+                model.Threshold = -1 + j/10.0; 
 
-            Console.WriteLine("\n\n---- One-Class SVM Results ----");
-            double correctPreds = fraudLabels
-                .Select((x, i) => detected[i] == 1 && x == 1 ? 1 : 0)
-                .Sum();
-            double precision = correctPreds / detected.Sum();
-            double overallRecall = correctPreds / fraudLabels.Sum();
-            Console.WriteLine("* Overall Fraud Detection: {0:0.00}%", overallRecall * 100.0);
-            Console.WriteLine("* Precision: {0:0.00}%", (precision) * 100.0);
-            Console.WriteLine("* False Alarm Rate: {0:0.00}%", (1 - precision) * 100.0);
+                int[] detected = new int[fraudData.Length];
+                double[] probs = new double[fraudData.Length];
+                for (int i = 0; i < fraudData.Length; i++)
+                {
+                    bool isNormal = model.Decide(fraudData[i]);
+                    detected[i] = isNormal ? 0 : 1;
+                }
+
+                Console.WriteLine("\n\n---- One-Class SVM Results ----");
+                Console.WriteLine("* Threshold: {0:0.00000}", model.Threshold);
+                double correctPreds = fraudLabels
+                    .Select((x, i) => detected[i] == 1 && x == 1 ? 1 : 0)
+                    .Sum();
+                double precision = correctPreds / detected.Sum();
+                double overallRecall = correctPreds / fraudLabels.Sum();
+                Console.WriteLine("* Overall Fraud Detection: {0:0.00}%", overallRecall * 100.0);
+                Console.WriteLine("* Precision: {0:0.00}%", (precision) * 100.0);
+                Console.WriteLine("* False Alarm Rate: {0:0.00}%", (1 - precision) * 100.0);
+            }
         }
 
         private static void BuildPCAClassifier(Frame<int, string> featuresDF)
@@ -227,7 +234,6 @@ namespace Modeling
             ).ToArray();
 
             return distances;
-
         }
     }
 }
