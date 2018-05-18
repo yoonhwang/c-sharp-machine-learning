@@ -17,7 +17,7 @@ namespace DataAnalyzer
 
             // Read in the Credit Card Fraud dataset
             // TODO: change the path to point to your data directory
-            string dataDirPath = @"\\Mac\Home\Documents\research\c-sharp-machine-learning\ch.10\input-data";
+            string dataDirPath = @"\\Mac\Home\Documents\c-sharp-machine-learning\ch.10\input-data";
 
             // Load the data into a data frame
             string dataPath = Path.Combine(dataDirPath, "creditcard.csv");
